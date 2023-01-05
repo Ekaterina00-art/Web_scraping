@@ -23,3 +23,45 @@
 реализованного по модели парсинга DOM. Эта библиотека сделает текст веб-страницы, извлеченный с помощью Requests, более удобочитаемым.
 
 ## Пример парсинга сайта TMDB
+
+1. Загрузка данных
+
+Библиотека Requests дает вам возможность посылать HTTP/1.1-запросы, 
+используя Python. С ее помощью можно добавлять контент, например заголовки, формы, многокомпонентные файлы и параметры, используя только 
+простые библиотеки Python. Для начала, получаем страницу по URL.
+```
+url = 'https://www.themoviedb.org/movie'
+page = requests.get(url)
+page.status_code
+```
+Запрос был получен и успешно обработан сервером, если мы получем код - 2хх.
+
+Теперь перейдем непосредственно к получению данных из HTML. Проще всего понять как устроена HTML-страница используя функцию "Просмотр код страницы" в браузере.
+В данном случае: вся таблица с названиями фильмов и их датами создания заключена в теге </div class = "content">.
+Пример кода представлен ниже:
+```
+  books_data = []
+items = soup.find_all('div', {'class': 'card style_1'})
+for item in items:
+    movie_name = item.find('div', {'class': 'content'}).find('a').text
+    movie_desc = item.find('div', {'class': 'content'}).find('p').text
+    movie_link = item.find('div', {'class': 'content'}).find('a').get('href')
+    movie_id = re.findall('\d+', movie_link)[0]
+    books_data.append({
+        'movie_id': movie_id,
+        'movie_name': movie_name,
+        'movie_desc': movie_desc
+    })
+    with open(f'labirint_{cur_time}.csv', 'a', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            (
+                movie_id,
+                movie_name,
+                movie_desc
+            )
+        )
+with open(f'labirint_{cur_time}.json', 'w') as file:
+        json.dump(books_data, file, indent=4, ensure_ascii=False)
+```
+Из приведенного кода видно, что после считывания мы выгружаем все данные промежуточную модель. А далее данные выгружаем в файлы - labirint_11_11_2022_16_19.csv и labirint_11_11_2022_16_19.json.
